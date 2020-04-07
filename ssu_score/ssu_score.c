@@ -503,6 +503,8 @@ double score_student(int fd, char *id) //
 	double score = 0;
 	int i;
 	char tmp[BUFLEN];
+	char del[BUFLEN];
+	char file[FILELEN];
 	int size = sizeof(score_table) / sizeof(score_table[0]);
 
 	for(i = 0; i < size ; i++)
@@ -525,8 +527,12 @@ double score_student(int fd, char *id) //
 				result = score_program(id, score_table[i].qname); //
 		}
 
-		if(result == false) // 틀릴경우
+		if(result == false){ // 틀릴경우
+			strcpy(file, score_table[i].qname);
+			sprintf(del, "%s/%s.exe", ansDir, strtok(file, "."));
+			unlink(del); // 정답 디렉토리에 .exe파일 삭제
 			write(fd, "0,", 2);
+		}
 		else{
 			if(result == true){ // 완벽히 맞은 경우
 				score += score_table[i].score;
@@ -836,6 +842,7 @@ int execute_program(char *id, char *filename) //
 
 	sprintf(tmp, "%s/%s.exe", ansDir, qname);
 	redirection(tmp, fd, STDOUT); // exe파일을 실행해 stdout에 저장
+	unlink(tmp); // 정답 디렉토리에 .exe 파일 제거 
 	close(fd);
 
 	sprintf(std_fname, "%s/%s/%s.stdout", stuDir, id, qname);
@@ -930,6 +937,7 @@ int compare_resultfile(char *file1, char *file2) // 컴파일 결과물 비교�
 	}
 	close(fd1);
 	close(fd2);
+	unlink(file2); // 정답 디렉토리에 .stdout파일 제거
 	return true;
 }
 
