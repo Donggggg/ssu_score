@@ -57,7 +57,7 @@ pid_t inBackground(char *name);
 double check_error_warning(char *filename);
 int compare_resultfile(char *file1, char *file2);
 
-void do_cOption(char (*ids)[FILELEN]);
+void do_iOption(int argc, char* argv[], int optind);
 int is_exist(char (*src)[FILELEN], char *target);
 
 int is_thread(char *qname);

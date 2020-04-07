@@ -20,8 +20,8 @@ char id_table[SNUM][10];
 char stuDir[BUFLEN]; // 학생 디렉토리명
 char ansDir[BUFLEN]; // 정답 디렉토리명
 char errorDir[BUFLEN]; /// 에러디렉토리명 
-char threadFiles[ARGNUM][FILELEN]; ///
-char cIDs[ARGNUM][FILELEN]; /// 아마 옵션?..
+char threadFiles[ARGNUM][FILELEN]; // -t옵션 사용할 문제 파일명
+char printId[ARGNUM][FILELEN]; /// -i옵션 사용할 학번
 
 int eOption = false; // 옵션들 on/off
 int tOption = false;
@@ -49,11 +49,6 @@ void ssu_score(int argc, char *argv[]) // 체점 시작
 	if(!check_option(argc, argv)) //옵션 체크
 		exit(1); // 설정 외의 옵션이 있으면 종료
 
-	if(!eOption && !tOption && !iOption && mOption){
-		//do_cOption(cIDs);
-		//return;
-	}
-
 	getcwd(saved_path, BUFLEN); // 현재 작업 디렉토리 전체경로 저장
 
 	if(chdir(stuDir) < 0){ // 작업디렉토리를 학생디렉토리로 변경
@@ -75,11 +70,10 @@ void ssu_score(int argc, char *argv[]) // 체점 시작
 	set_idTable(stuDir); // 학번테이블 생성
 
 	printf("grading student's test papers..\n");
-	score_students(); //
+	score_students(); // 체점 시작
 
-	//if(cOption)
-	//	do_cOption(cIDs);
-
+	if(iOption != false) // 중복옵션으로 사용될 경우
+		do_iOption(argc, argv, iOption);
 	return;
 }
 
@@ -118,7 +112,23 @@ int check_option(int argc, char *argv[]) // 옵션을 체크하는 함수
 				}
 				break;
 			case 'i': // i옵션
-				iOption = true;
+				iOption = optind;
+				i = optind; // i옵션이 몇 번째 가변인자인지 체크
+				j = 0;
+
+				while(i < argc && argv[i][0] != '-') //가변인자 체크
+				{ 
+					if(j >= ARGNUM) // 5개 초과 시
+						printf("Maximum Number of Argument Exceeded.  :: %s\n", argv[i]);
+					else
+						strcpy(printId[j], argv[i]);
+					i++; 
+					j++;
+				}
+				if(!strcmp(argv[1], "-i")){ // 단독 사용시 
+					do_iOption(argc, argv, optind);
+					return false;
+				}
 				break;
 			case 'm': // m옵션
 				mOption = true;
@@ -159,7 +169,7 @@ void do_mOption(char *path) // m옵션을 처리해주는 함수
 
 		if(!strcmp(mod, "no")) 
 			break;
-		else{
+		else
 			while(fscanf(fp, "%[^,],%s\n", qname, score) != EOF)
 			{
 				strcpy(qname, strtok(qname, "."));
@@ -196,32 +206,66 @@ void do_mOption(char *path) // m옵션을 처리해주는 함수
 					free(tail);
 				}
 			}
-		}
 	}
 	fclose(fp);
 }
 
-int is_exist(char (*src)[FILELEN], char *target)
+void do_iOption(int argc, char* argv[], int optind) // i옵션을 처리하는 함수
 {
-	int i = 0;
+	FILE *fp;
+	int i, j, k, qnum = 0;
+	double d_score;
+	char *id, *score;
+	char *qname;
+	char tmp[BUFLEN];
+	char qlist[QNUM][FILELEN];
+	int size = sizeof(printId) / sizeof(printId[0]);
 
-	while(1)
-	{
-		if(i >= ARGNUM)
-			return false;
-		else if(!strcmp(src[i], ""))
-			return false;
-		else if(!strcmp(src[i++], target))
-			return true;
+	if((fp = fopen("score.csv", "r")) == NULL){
+		fprintf(stderr, "file open error for score.csv\n");
+		return ;
 	}
-	return false;
+
+	fscanf(fp, "%s\n", tmp);
+	qname = strtok(tmp, ","); // 문제파일명
+
+	while(strcmp(qname, "sum")) // 문제들을 리스트에 저장
+	{
+		strcpy(qlist[qnum++] , qname);
+		qname = strtok(NULL, ",");
+	} 
+
+	for(i = 0; i < size; i++) // 확일해야할 학번 탐색
+	{
+		while(fscanf(fp, "%s\n", tmp) != EOF)
+		{
+			id = strtok(tmp, ","); // score.csv에서 일치하는 학번 탐색
+			if(!strcmp(id, printId[i])){
+				printf("%s's wrong answer :\n", printId[i]);
+				k = qnum;
+				j = 0;
+				score = strtok(NULL, ","); 
+				while(k--) // 틀린문제 탐색
+				{
+					d_score = atof(score);
+					if(d_score == 0)
+						printf("%s ", qlist[j]); // 틀린 문제 출력
+					score = strtok(NULL, ",");
+					j++; 
+				} 
+				printf("\n");
+				break;
+			}
+		}
+		fseek(fp, 0, SEEK_SET);
+		fscanf(fp, "%s\n", tmp);
+	} 
+	fclose(fp);
 }
 
 void set_scoreTable(char *ansDir) // 점수테이블을 세팅하는 함수
 {
-	char filename[FILELEN]; // 파일명 
-
-	sprintf(filename, "%s/%s", ansDir, "score_table.csv"); //ANS_DIR/score_table.csv 형태
+	char *filename = "score_table.csv"; // 현재 디렉토리에 score_table.csv 형태
 
 	if(access(filename, F_OK) == 0)  // 기존 파일 있으면
 		read_scoreTable(filename); // 점수 파일 읽음
@@ -230,7 +274,7 @@ void set_scoreTable(char *ansDir) // 점수테이블을 세팅하는 함수
 		write_scoreTable(filename); //씀
 	}
 
-	if(mOption)
+	if(mOption) // m옵션 있을시 점수 수정
 		do_mOption(filename);
 }
 
@@ -284,31 +328,8 @@ void make_scoreTable(char *ansDir)
 		if(!strcmp(dirp->d_name, ".") || !strcmp(dirp->d_name, "..")) //경로 시작이 부모나 자신이면
 			continue;
 
-		//		sprintf(tmp, "%s/%s", ansDir, dirp->d_name);
-		//		printf("tmp : %s\n", tmp);
-		//			if((type = get_file_type(c_dirp->d_name)) < 0)
-		//				continue;
-
 		type = get_file_type(dirp->d_name);
 		strcpy(score_table[idx++].qname, dirp->d_name);
-
-		/**		if((c_dp = opendir(tmp)) == NULL){
-		  fprintf(stderr, "open dir error for %s\n", tmp);
-		  return;
-		  } 
-
-		  while((c_dirp = readdir(c_dp)) != NULL)
-		  {
-		  if(!strcmp(c_dirp->d_name, ".") || !strcmp(c_dirp->d_name, ".."))
-		  continue;
-
-		  if((type = get_file_type(c_dirp->d_name)) < 0)
-		  continue;
-
-		  strcpy(score_table[idx++].qname, c_dirp->d_name);
-		  }
-
-		  closedir(c_dp); **/
 	}
 
 	closedir(dp);
@@ -358,7 +379,6 @@ void write_scoreTable(char *filename) // 스코어테이블에 입력하는 함�
 
 	close(fd);
 }
-
 
 void set_idTable(char *stuDir) // 학번테이블을 만들어주는 함수
 {
@@ -465,7 +485,7 @@ int get_create_type() // 문제 점수 테이블 설정 방식 선택 함수
 	return num;
 }
 
-void score_students()
+void score_students() //체점을 시작하는 함수
 {
 	double score = 0;
 	int num;
@@ -496,7 +516,7 @@ void score_students()
 	close(fd);
 }
 
-double score_student(int fd, char *id) //
+double score_student(int fd, char *id) // 총점을 계산해주는 함수
 {
 	int type;
 	double result;
@@ -523,7 +543,7 @@ double score_student(int fd, char *id) //
 
 			if(type == TEXTFILE)
 				result = score_blank(id, score_table[i].qname); //
-			else if(type == CFILE)
+			if(type == CFILE)
 				result = score_program(id, score_table[i].qname); //
 		}
 
@@ -731,7 +751,7 @@ int is_thread(char *qname) // 쓰레드 파일인지 검사해주는 함수
 	return false;
 }
 
-double compile_program(char *id, char *filename) // 커팡ㄹ
+double compile_program(char *id, char *filename) // 컴파일오류와 감점사항을 리턴해주는 함수
 {
 	int fd;
 	char tmp_f[BUFLEN], tmp_e[BUFLEN];
@@ -825,7 +845,7 @@ double check_error_warning(char *filename) // error, warning 감지해 감점처
 	return warning;
 }
 
-int execute_program(char *id, char *filename) //
+int execute_program(char *id, char *filename) // 파일들을 실행해 비교하는 함수
 {
 	char std_fname[BUFLEN], ans_fname[BUFLEN];
 	char tmp[BUFLEN];
