@@ -11,7 +11,7 @@ char datatype[DATATYPE_SIZE][MINLEN] = {"int", "char", "double", "float", "long"
 			, "nlink_t", "uid_t", "gid_t", "time_t", "blksize_t"
 			, "blkcnt_t", "pid_t", "pthread_mutex_t", "pthread_cond_t", "pthread_t"
 			, "void", "size_t", "unsigned", "sigset_t", "sigjmp_buf"
-			, "rlim_t", "jmp_buf", "sig_atomic_t", "clock_t", "struct"};
+			, "rlim_t", "jmp_buf", "sig_atomic_t", "clock_t", "struct"}; // 데이터타입 모음
 
 
 operator_precedence operators[OPERATOR_CNT] = {
@@ -27,19 +27,19 @@ operator_precedence operators[OPERATOR_CNT] = {
 	,{"&&", 12}
 	,{"||", 13}
 	,{"=", 14}	,{"+=", 14}	,{"-=", 14}	,{"&=", 14}	,{"|=", 14}
-};
+}; // 연산자 밑 우선순위 
 
-void compare_tree(node *root1,  node *root2, int *result)
+void compare_tree(node *root1,  node *root2, int *result) // 트리를 비교해주는 함수 
 {
 	node *tmp;
 	int cnt1, cnt2;
 
-	if(root1 == NULL || root2 == NULL){
+	if(root1 == NULL || root2 == NULL){ // 1과 2가 둘다 널이면 
 		*result = false;
 		return;
 	}
 
-	if(!strcmp(root1->name, "<") || !strcmp(root1->name, ">") || !strcmp(root1->name, "<=") || !strcmp(root1->name, ">=")){
+	if(!strcmp(root1->name, "<") || !strcmp(root1->name, ">") || !strcmp(root1->name, "<=") || !strcmp(root1->name, ">=")){ // 1의 요소가 부등호류 이면 한뱡항으로 바꿔줌
 		if(strcmp(root1->name, root2->name) != 0){
 
 			if(!strncmp(root2->name, "<", 1))
@@ -54,94 +54,94 @@ void compare_tree(node *root1,  node *root2, int *result)
 			else if(!strncmp(root2->name, ">=", 2))
 				strncpy(root2->name, "<=", 2);
 
-			root2 = change_sibling(root2);
+			root2 = change_sibling(root2); // 형제도 교체 
 		}
 	}
 
-	if(strcmp(root1->name, root2->name) != 0){
+	if(strcmp(root1->name, root2->name) != 0){ // 1과 2가 다르면 
 		*result = false;
 		return;
 	}
 
-	if((root1->child_head != NULL && root2->child_head == NULL)
-		|| (root1->child_head == NULL && root2->child_head != NULL)){
+	if((root1->child_head != NULL && root2->child_head == NULL) 
+		|| (root1->child_head == NULL && root2->child_head != NULL)){ // 형제의 구성이 다르면 
 		*result = false;
 		return;
 	}
 
-	else if(root1->child_head != NULL){
-		if(get_sibling_cnt(root1->child_head) != get_sibling_cnt(root2->child_head)){
+	else if(root1->child_head != NULL){ // 1의 자식이 있으면
+		if(get_sibling_cnt(root1->child_head) != get_sibling_cnt(root2->child_head)){ // 1과 2의 자식수가 틀리면 
 			*result = false;
 			return;
 		}
 
-		if(!strcmp(root1->name, "==") || !strcmp(root1->name, "!="))
+		if(!strcmp(root1->name, "==") || !strcmp(root1->name, "!=")) // 1의 내용이 ==나 !=이면
 		{
-			compare_tree(root1->child_head, root2->child_head, result);
+			compare_tree(root1->child_head, root2->child_head, result); // 다시 비교 
 
-			if(*result == false)
+			if(*result == false) // 결과가 false면  
 			{
-				*result = true;
-				root2 = change_sibling(root2);
-				compare_tree(root1->child_head, root2->child_head, result);
+				*result = true; //true로 바꾸고
+				root2 = change_sibling(root2); //형제를 바꾸고 
+				compare_tree(root1->child_head, root2->child_head, result);// 다시 비교
 			}
 		}
 		else if(!strcmp(root1->name, "+") || !strcmp(root1->name, "*")
 				|| !strcmp(root1->name, "|") || !strcmp(root1->name, "&")
 				|| !strcmp(root1->name, "||") || !strcmp(root1->name, "&&"))
-		{
-			if(get_sibling_cnt(root1->child_head) != get_sibling_cnt(root2->child_head)){
-				*result = false;
+		{ // 양변이 상관 없는 연산자일 경우
+			if(get_sibling_cnt(root1->child_head) != get_sibling_cnt(root2->child_head)){ // 자식의 수가 다르면 
+				*result = false; // 
 				return;
 			}
 
-			tmp = root2->child_head;
+			tmp = root2->child_head; // 2의 자식을 tmp로 저장
 
-			while(tmp->prev != NULL)
+			while(tmp->prev != NULL) // tmp의 마지막으로 이동 
 				tmp = tmp->prev;
 
-			while(tmp != NULL)
+			while(tmp != NULL) // tmp의 마지막이 널이아니면 
 			{
-				compare_tree(root1->child_head, tmp, result);
+				compare_tree(root1->child_head, tmp, result); // 루트1의 자식과 tmp를 비교 
 			
-				if(*result == true)
+				if(*result == true) // true면 break
 					break;
-				else{
-					if(tmp->next != NULL)
+				else{ 
+					if(tmp->next != NULL) // 널이아니면 
 						*result = true;
 					tmp = tmp->next;
 				}
 			}
 		}
-		else{
+		else{ //그외의 경우 
 			compare_tree(root1->child_head, root2->child_head, result);
 		}
 	}	
 
 
-	if(root1->next != NULL){
+	if(root1->next != NULL){ // 1의 다음이 널이 아니면 
 
-		if(get_sibling_cnt(root1) != get_sibling_cnt(root2)){
+		if(get_sibling_cnt(root1) != get_sibling_cnt(root2)){ // 1과 2의 자식 수가 다르면 
 			*result = false;
 			return;
 		}
 
 		if(*result == true)
 		{
-			tmp = get_operator(root1);
+			tmp = get_operator(root1); // root1의 부모를 얻음
 	
 			if(!strcmp(tmp->name, "+") || !strcmp(tmp->name, "*")
 					|| !strcmp(tmp->name, "|") || !strcmp(tmp->name, "&")
 					|| !strcmp(tmp->name, "||") || !strcmp(tmp->name, "&&"))
-			{	
-				tmp = root2;
+			{	//양 변의 인자가 상관 없는 연산자인 경우
+				tmp = root2; // tmp에 2를 저장
 	
-				while(tmp->prev != NULL)
+				while(tmp->prev != NULL) // tmp의 헤드까지
 					tmp = tmp->prev;
 
-				while(tmp != NULL)
+				while(tmp != NULL) // tmp가 널이 아닐때까지 
 				{
-					compare_tree(root1->next, tmp, result);
+					compare_tree(root1->next, tmp, result); // 1의 다음과 tmp를 비교
 
 					if(*result == true)
 						break;
@@ -824,7 +824,7 @@ node *make_tree(node *root, char (*tokens)[MINLEN], int *idx, int parentheses)
 	return get_root(cur);
 }
 
-node *change_sibling(node *parent)
+node *change_sibling(node *parent) // 형제를 교체해주는 함수 
 {
 	node *tmp;
 	
@@ -842,7 +842,7 @@ node *change_sibling(node *parent)
 	return parent;
 }
 
-node *create_node(char *name, int parentheses)
+node *create_node(char *name, int parentheses) // 새로운 노드를 만들어주는 함수
 {
 	node *new;
 
@@ -859,7 +859,7 @@ node *create_node(char *name, int parentheses)
 	return new;
 }
 
-int get_precedence(char *op)
+int get_precedence(char *op) // 우선순위를 구해주는 함수 
 {
 	int i;
 
@@ -870,7 +870,7 @@ int get_precedence(char *op)
 	return false;
 }
 
-int is_operator(char *op)
+int is_operator(char *op) // 연산자가 있는지 검사해주는 함수
 {
 	int i;
 
@@ -886,21 +886,7 @@ int is_operator(char *op)
 	return false;
 }
 
-void print(node *cur)
-{
-	if(cur->child_head != NULL){
-		print(cur->child_head);
-		printf("\n");
-	}
-
-	if(cur->next != NULL){
-		print(cur->next);
-		printf("\t");
-	}
-	printf("%s", cur->name);
-}
-
-node *get_operator(node *cur)
+node *get_operator(node *cur) // 해당 트리의 부모를 구해주는 함수
 {
 	if(cur == NULL)
 		return cur;
@@ -912,7 +898,7 @@ node *get_operator(node *cur)
 	return cur->parent;
 }
 
-node *get_root(node *cur)
+node *get_root(node *cur) // root를 찾아주는 함수
 {
 	if(cur == NULL)
 		return cur;
@@ -926,7 +912,7 @@ node *get_root(node *cur)
 	return cur;
 }
 
-node *get_high_precedence_node(node *cur, node *new)
+node *get_high_precedence_node(node *cur, node *new) // 둘 중 높은 우선순위를 가진 노드를 구해주는 함수
 {
 	if(is_operator(cur->name))
 		if(get_precedence(cur->name) < get_precedence(new->name))
@@ -948,7 +934,7 @@ node *get_high_precedence_node(node *cur, node *new)
 		return cur;
 }
 
-node *get_most_high_precedence_node(node *cur, node *new)
+node *get_most_high_precedence_node(node *cur, node *new) // 가장 우선순위가 높은 노드를 구해주는 함수
 {
 	node *operator = get_high_precedence_node(cur, new);
 	node *saved_operator = operator;
@@ -970,7 +956,7 @@ node *get_most_high_precedence_node(node *cur, node *new)
 	return saved_operator;
 }
 
-node *insert_node(node *old, node *new)
+node *insert_node(node *old, node *new) // 노드를 중간에 삽입해주는 함수
 {
 	if(old->prev != NULL){
 		new->prev = old->prev;
@@ -984,7 +970,7 @@ node *insert_node(node *old, node *new)
 	return new;
 }
 
-node *get_last_child(node *cur)
+node *get_last_child(node *cur) // 마지막자식을 얻어주는 함수
 {
 	if(cur->child_head != NULL)
 		cur = cur->child_head;
@@ -995,7 +981,7 @@ node *get_last_child(node *cur)
 	return cur;
 }
 
-int get_sibling_cnt(node *cur)
+int get_sibling_cnt(node *cur) // 형제의 수를 체크해주는 함수
 {
 	int i = 0;
 
@@ -1010,7 +996,7 @@ int get_sibling_cnt(node *cur)
 	return i;
 }
 
-void free_node(node *cur)
+void free_node(node *cur) // 노드의 메모리를 해제해주는 함수
 {
 	if(cur->child_head != NULL)
 		free_node(cur->child_head);
@@ -1028,12 +1014,12 @@ void free_node(node *cur)
 }
 
 
-int is_character(char c)
+int is_character(char c) // 문자인지 리턴해주는 함수 
 {
 	return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
 }
 
-int is_typeStatement(char *str)
+int is_typeStatement(char *str) // 데이터타입인지 확인해주는 함수
 { 
 	char *start;
 	char str2[BUFLEN] = {0}; 
@@ -1129,7 +1115,7 @@ int all_star(char *str) // 문자열에 *이 있는지 확인 해주는 함수
 
 }
 
-int all_character(char *str)
+int all_character(char *str) // 
 {
 	int i;
 
@@ -1140,7 +1126,7 @@ int all_character(char *str)
 	
 }
 
-int reset_tokens(int start, char tokens[TOKEN_CNT][MINLEN]) 
+int reset_tokens(int start, char tokens[TOKEN_CNT][MINLEN]) //토큰리스트를 리셋해주는 함수
 {
 	int i;
 	int j = start - 1;
@@ -1253,7 +1239,7 @@ void clear_tokens(char tokens[TOKEN_CNT][MINLEN]) // 토큰리스트 비워주�
 		memset(tokens[i], 0, sizeof(tokens[i]));
 }
 
-char *rtrim(char *_str) // 문자열 끝에 널문자 삽입하는 함수
+char *rtrim(char *_str) // 우측 공백문자를 제거하고 널로 교체
 {
 	char tmp[BUFLEN];
 	char *end;
@@ -1268,7 +1254,7 @@ char *rtrim(char *_str) // 문자열 끝에 널문자 삽입하는 함수
 	return _str; // 작업된 문자열 리턴
 }
 
-char *ltrim(char *_str)
+char *ltrim(char *_str) // 좌측공백문자 제거 함수
 {
 	char *start = _str;
 
@@ -1278,7 +1264,7 @@ char *ltrim(char *_str)
 	return _str;
 }
 
-char* remove_extraspace(char *str)
+char* remove_extraspace(char *str) // 
 {
 	int i;
 	char *str2 = (char*)malloc(sizeof(char) * BUFLEN);
@@ -1319,9 +1305,7 @@ char* remove_extraspace(char *str)
 	return str2;
 }
 
-
-
-void remove_space(char *str)
+void remove_space(char *str) // 공백을 제거해주는 함수
 {
 	char* i = str;
 	char* j = str;
@@ -1359,7 +1343,7 @@ int check_brackets(char *str) // 괄호가 올바른지 체크해주는 함수
 		return 1;
 }
 
-int get_token_cnt(char tokens[TOKEN_CNT][MINLEN])
+int get_token_cnt(char tokens[TOKEN_CNT][MINLEN]) // 토큰의 개수를 구하는 함수
 {
 	int i;
 	

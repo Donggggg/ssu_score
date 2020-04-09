@@ -30,6 +30,7 @@ int mOption = false;
 
 void ssu_score(int argc, char *argv[]) // 체점 시작
 {
+	printf("1");
 	char saved_path[BUFLEN]; // 경로 변수
 	int i;
 
