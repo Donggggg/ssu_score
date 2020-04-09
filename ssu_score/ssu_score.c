@@ -156,7 +156,7 @@ void do_mOption(char *path) // m옵션을 처리해주는 함수
 	while(1)
 	{
 		if((fp = fopen(path, "r")) == NULL){ // scoretable.scv를 오픈
-			fprintf(stderr, "file open error for %s\n", path);
+			fprintf(stderr, "(do_mOption)file open error for %s\n", path);
 			return ;
 		}
 
@@ -286,7 +286,7 @@ void read_scoreTable(char *path)
 	int idx = 0;
 
 	if((fp = fopen(path, "r")) == NULL){ // 읽기전용으로 점수테이블 open
-		fprintf(stderr, "file open error for %s\n", path);
+		fprintf(stderr, "(read_scoreTable)file open error for %s\n", path);
 		return ;
 	}
 
@@ -592,7 +592,7 @@ void write_first_row(int fd) // score.csv의 첫 줄 입력 함수
 	write(fd, "sum\n", 4);
 }
 
-char *get_answer(int fd, char *result)
+char *get_answer(int fd, char *result) // ':'로 구분된 정답을 분리해주는 함수
 {
 	char c;
 	int idx = 0;
@@ -600,12 +600,12 @@ char *get_answer(int fd, char *result)
 	memset(result, 0, BUFLEN);
 	while(read(fd, &c, 1) > 0)
 	{
-		if(c == ':')
+		if(c == ':') // ':'이 나오면 break
 			break;
 
 		result[idx++] = c;
 	}
-	if(result[strlen(result) - 1] == '\n')
+	if(result[strlen(result) - 1] == '\n') // 유일한 답이 존재하는 경우
 		result[strlen(result) - 1] = '\0';
 
 	return result;
@@ -624,38 +624,38 @@ int score_blank(char *id, char *filename) // 빈칸문제 점수처리
 	int has_semicolon = false;
 
 	memset(qname, 0, sizeof(qname));
-	memcpy(qname, filename, strlen(filename) - strlen(strrchr(filename, '.')));
+	memcpy(qname, filename, strlen(filename) - strlen(strrchr(filename, '.'))); // 확장자 제외한 문제번호
 
 	sprintf(tmp, "%s/%s/%s", stuDir, id, filename);
 	fd_std = open(tmp, O_RDONLY);
-	strcpy(s_answer, get_answer(fd_std, s_answer));
+	strcpy(s_answer, get_answer(fd_std, s_answer)); // 해당 문제의 학생 답을 얻어옴
 
-	if(!strcmp(s_answer, "")){
+	if(!strcmp(s_answer, "")){ // 답을 기입못한 경우
 		close(fd_std);
 		return false;
 	}
 
-	if(!check_brackets(s_answer)){
+	if(!check_brackets(s_answer)){ // 괄호의 개수가 맞지 않는 경우
 		close(fd_std);
 		return false;
 	}
 
-	strcpy(s_answer, ltrim(rtrim(s_answer)));
+	strcpy(s_answer, ltrim(rtrim(s_answer))); // 앞과 뒤의 공백문자 제거 후 복사
 
-	if(s_answer[strlen(s_answer) - 1] == ';'){
-		has_semicolon = true;
-		s_answer[strlen(s_answer) - 1] = '\0';
+	if(s_answer[strlen(s_answer) - 1] == ';'){ // 세미콜론이 있는지 체크
+		has_semicolon = true; // 있으면
+		s_answer[strlen(s_answer) - 1] = '\0'; // 널문자로 바꿔줌
 	}
 
-	if(!make_tokens(s_answer, tokens)){
+	if(!make_tokens(s_answer, tokens)){ // 토큰으로 분리 
 		close(fd_std);
 		return false;
 	}
 
 	idx = 0;
-	std_root = make_tree(std_root, tokens, &idx, 0);
+	std_root = make_tree(std_root, tokens, &idx, 0); // 학생 답 토큰들을 트리화
 
-	sprintf(tmp, "%s/%s/%s", ansDir, qname, filename);
+	sprintf(tmp, "%s/%s", ansDir, filename);
 	fd_ans = open(tmp, O_RDONLY);
 
 	while(1)
@@ -666,14 +666,15 @@ int score_blank(char *id, char *filename) // 빈칸문제 점수처리
 		for(idx = 0; idx < TOKEN_CNT; idx++)
 			memset(tokens[idx], 0, sizeof(tokens[idx]));
 
-		strcpy(a_answer, get_answer(fd_ans, a_answer));
+		strcpy(a_answer, get_answer(fd_ans, a_answer)); // ':'로 구분된 정답 분리
 
 		if(!strcmp(a_answer, ""))
 			break;
 
-		strcpy(a_answer, ltrim(rtrim(a_answer)));
+		strcpy(a_answer, ltrim(rtrim(a_answer))); // 앞과 뒤의 공백문자 제거
 
-		if(has_semicolon == false){
+		/** 세미콜론 처리 부분 **/
+		if(has_semicolon == false){ 
 			if(a_answer[strlen(a_answer) -1] == ';')
 				continue;
 		}
@@ -710,7 +711,7 @@ int score_blank(char *id, char *filename) // 빈칸문제 점수처리
 	close(fd_std);
 	close(fd_ans);
 
-	if(std_root != NULL)
+	if(std_root != NULL) // 트리 메모리 해제
 		free_node(std_root);
 	if(ans_root != NULL)
 		free_node(ans_root);
@@ -784,6 +785,7 @@ double compile_program(char *id, char *filename) // 컴파일오류와 감점사
 
 	if(size > 0) //에러 출력시  정답파일 잘못됨
 		return false;
+	
 
 	sprintf(tmp_f, "%s/%s/%s", stuDir, id, filename); // 학생 실행파일생성
 	sprintf(tmp_e, "%s/%s/%s.stdexe", stuDir, id, qname);
@@ -864,7 +866,6 @@ int execute_program(char *id, char *filename) // 파일들을 실행해 비교�
 	redirection(tmp, fd, STDOUT); // exe파일을 실행해 stdout에 저장
 	unlink(tmp); // 정답 디렉토리에 .exe 파일 제거 
 	close(fd);
-
 	sprintf(std_fname, "%s/%s/%s.stdout", stuDir, id, qname);
 	fd = creat(std_fname, 0666);
 
@@ -882,7 +883,7 @@ int execute_program(char *id, char *filename) // 파일들을 실행해 비교�
 			close(fd);
 			return false;
 		}
-	}
+	} 
 
 	close(fd);
 

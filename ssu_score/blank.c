@@ -159,7 +159,7 @@ void compare_tree(node *root1,  node *root2, int *result)
 	}
 }
 
-int make_tokens(char *str, char tokens[TOKEN_CNT][MINLEN])
+int make_tokens(char *str, char tokens[TOKEN_CNT][MINLEN]) // 문자열을 토크나이징하는 함수
 {
 	char *start, *end;
 	char tmp[BUFLEN];
@@ -171,41 +171,41 @@ int make_tokens(char *str, char tokens[TOKEN_CNT][MINLEN])
 	int lcount, rcount;
 	int p_str;
 	
-	clear_tokens(tokens);
+	clear_tokens(tokens); // 토큰리스트 초기화
 
-	start = str;
+	start = str; 
 	
-	if(is_typeStatement(str) == 0) 
-		return false;	
+	//if(is_typeStatement(str) == 0) // 데이터타입인지 체크
+	//	return false;	
 	
 	while(1)
 	{
-		if((end = strpbrk(start, op)) == NULL)
+		if((end = strpbrk(start, op)) == NULL) // 연산기호가 없으면 break;
 			break;
 
-		if(start == end){
+		if(start == end){ // 연산기호가 시작에 있으면
 
-			if(!strncmp(start, "--", 2) || !strncmp(start, "++", 2)){
+			if(!strncmp(start, "--", 2) || !strncmp(start, "++", 2)){ // --, ++
 				if(!strncmp(start, "++++", 4)||!strncmp(start,"----",4))
 					return false;
 
-				if(is_character(*ltrim(start + 2))){
+				if(is_character(*ltrim(start + 2))){ // 바로 다음 요소가 문자이면
 					if(row > 0 && is_character(tokens[row - 1][strlen(tokens[row - 1]) - 1]))
 						return false; 
 
-					end = strpbrk(start + 2, op);
-					if(end == NULL)
-						end = &str[strlen(str)];
-					while(start < end) {
-						if(*(start - 1) == ' ' && is_character(tokens[row][strlen(tokens[row]) - 1]))
+					end = strpbrk(start + 2, op); // 다음 연산자전까지 end변경
+					if(end == NULL) // end가 문자열 끝을 초과하면
+						end = &str[strlen(str)]; // 마지막 주소를 end로 
+					while(start < end) { // 초과하지 않으면
+						if(*(start - 1) == ' ' && is_character(tokens[row][strlen(tokens[row]) - 1]))  
 							return false;
-						else if(*start != ' ')
+						else if(*start != ' ') // 공백이 아니면 토큰에 붙임
 							strncat(tokens[row], start, 1);
 						start++;	
 					}
 				}
 				
-				else if(row>0 && is_character(tokens[row - 1][strlen(tokens[row - 1]) - 1])){
+				else if(row>0 && is_character(tokens[row - 1][strlen(tokens[row - 1]) - 1])){ // 앞의 토큰에 문자열이 있으면 앞에 붙여줌
 					if(strstr(tokens[row - 1], "++") != NULL || strstr(tokens[row - 1], "--") != NULL)	
 						return false;
 
@@ -215,7 +215,7 @@ int make_tokens(char *str, char tokens[TOKEN_CNT][MINLEN])
 					start += 2;
 					row--;
 				}
-				else{
+				else{ // 그 외의 경우
 					memset(tmp, 0, sizeof(tmp));
 					strncpy(tmp, start, 2);
 					strcat(tokens[row], tmp);
@@ -227,14 +227,14 @@ int make_tokens(char *str, char tokens[TOKEN_CNT][MINLEN])
 				|| !strncmp(start, ">=", 2) || !strncmp(start, "||", 2) || !strncmp(start, "&&", 2) 
 				|| !strncmp(start, "&=", 2) || !strncmp(start, "^=", 2) || !strncmp(start, "!=", 2) 
 				|| !strncmp(start, "|=", 2) || !strncmp(start, "+=", 2)	|| !strncmp(start, "-=", 2) 
-				|| !strncmp(start, "*=", 2) || !strncmp(start, "/=", 2)){
+				|| !strncmp(start, "*=", 2) || !strncmp(start, "/=", 2)){ //비교 연산자면
 
 				strncpy(tokens[row], start, 2);
 				start += 2;
 			}
-			else if(!strncmp(start, "->", 2))
+			else if(!strncmp(start, "->", 2)) // 구조체포인터 변수 접근자이면
 			{
-				end = strpbrk(start + 2, op);
+				end = strpbrk(start + 2, op); // 다음 문자열 끝을 end로
 
 				if(end == NULL)
 					end = &str[strlen(str)];
@@ -246,13 +246,13 @@ int make_tokens(char *str, char tokens[TOKEN_CNT][MINLEN])
 				}
 				row--;
 			}
-			else if(*end == '&')
+			else if(*end == '&') // 주소지정자이면
 			{
 				
 				if(row == 0 || (strpbrk(tokens[row - 1], op) != NULL)){
 					end = strpbrk(start + 1, op);
-					if(end == NULL)
-						end = &str[strlen(str)];
+					if(end == NULL) // end가 널을 초과하면
+						end = &str[strlen(str)]; //마지막 널로 변경
 					
 					strncat(tokens[row], start, 1);
 					start++;
@@ -272,7 +272,7 @@ int make_tokens(char *str, char tokens[TOKEN_CNT][MINLEN])
 				}
 				
 			}
-		  	else if(*end == '*')
+		  	else if(*end == '*') // 포인터면
 			{
 				isPointer=0;
 
@@ -334,7 +334,7 @@ int make_tokens(char *str, char tokens[TOKEN_CNT][MINLEN])
 					}
 				}
 			}
-			else if(*end == '(') 
+			else if(*end == '(') // 여는 괄호면
 			{
 				lcount = 0;
 				rcount = 0;
@@ -373,7 +373,7 @@ int make_tokens(char *str, char tokens[TOKEN_CNT][MINLEN])
 				}
 
 			}
-			else if(*end == '\"') 
+			else if(*end == '\"') // 역슬래시면
 			{
 				end = strpbrk(start + 1, "\"");
 				
@@ -387,7 +387,7 @@ int make_tokens(char *str, char tokens[TOKEN_CNT][MINLEN])
 
 			}
 
-			else{
+			else{ // 그 외의 경우면
 				
 				if(row > 0 && !strcmp(tokens[row - 1], "++"))
 					return false;
@@ -401,12 +401,9 @@ int make_tokens(char *str, char tokens[TOKEN_CNT][MINLEN])
 				
 			
 				if(!strcmp(tokens[row], "-") || !strcmp(tokens[row], "+") || !strcmp(tokens[row], "--") || !strcmp(tokens[row], "++")){
-
-
 				
 					if(row == 0)
 						row--;
-
 					
 					else if(!is_character(tokens[row - 1][strlen(tokens[row - 1]) - 1])){
 					
@@ -416,26 +413,26 @@ int make_tokens(char *str, char tokens[TOKEN_CNT][MINLEN])
 				}
 			}
 		}
-		else{ 
-			if(all_star(tokens[row - 1]) && row > 1 && !is_character(tokens[row - 2][strlen(tokens[row - 2]) - 1]))   
+		else{ // start와 end가 다르면(보통 문자열)
+			if(all_star(tokens[row - 1]) && row > 1 && !is_character(tokens[row - 2][strlen(tokens[row - 2]) - 1])) // 포인터인지검사(row가 2이상)
 				row--;				
 
-			if(all_star(tokens[row - 1]) && row == 1)   
+			if(all_star(tokens[row - 1]) && row == 1)   // 포인터인지검사 (row가 1)
 				row--;	
 
-			for(i = 0; i < end - start; i++){
-				if(i > 0 && *(start + i) == '.'){
-					strncat(tokens[row], start + i, 1);
+			for(i = 0; i < end - start; i++){ // 토큰 길이만큼
+				if(i > 0 && *(start + i) == '.'){ // 구조체접근이면
+					strncat(tokens[row], start + i, 1); // '.'을 바로 붙여줌
 
-					while( *(start + i +1) == ' ' && i< end - start )
+					while( *(start + i + 1) == ' ' && i< end - start )
 						i++; 
 				}
-				else if(start[i] == ' '){
+				else if(start[i] == ' '){ // 스페이스면 제거
 					while(start[i] == ' ')
 						i++;
 					break;
 				}
-				else
+				else // 그 외면 토큰에 붙임
 					strncat(tokens[row], start + i, 1);
 			}
 
@@ -443,44 +440,45 @@ int make_tokens(char *str, char tokens[TOKEN_CNT][MINLEN])
 				start += i;
 				continue;
 			}
-			start += i;
+			start += i; // 토큰이 된만큼 start 좌표 옮김
 		}
 			
-		strcpy(tokens[row], ltrim(rtrim(tokens[row])));
+		strcpy(tokens[row], ltrim(rtrim(tokens[row]))); // trim하여 다시 저장
 
+/*		// 데이터타입이 앞 토큰이거나 앞토큰의 마지막 문자가 문자거나 점이면
 		 if(row > 0 && is_character(tokens[row][strlen(tokens[row]) - 1]) 
 				&& (is_typeStatement(tokens[row - 1]) == 2 
 					|| is_character(tokens[row - 1][strlen(tokens[row - 1]) - 1])
 					|| tokens[row - 1][strlen(tokens[row - 1]) - 1] == '.' ) ){
 
-			if(row > 1 && strcmp(tokens[row - 2],"(") == 0)
+			if(row > 1 && strcmp(tokens[row - 2],"(") == 0) // 토큰이 2개 이상 있고 2개 앞의 토큰이 여는 괄호면 
 			{
-				if(strcmp(tokens[row - 1], "struct") != 0 && strcmp(tokens[row - 1],"unsigned") != 0)
+				if(strcmp(tokens[row - 1], "struct") != 0 && strcmp(tokens[row - 1],"unsigned") != 0)// 앞의 토큰이 struct과 unsigned가 아니면 
 					return false;
 			}
-			else if(row == 1 && is_character(tokens[row][strlen(tokens[row]) - 1])) {
-				if(strcmp(tokens[0], "extern") != 0 && strcmp(tokens[0], "unsigned") != 0 && is_typeStatement(tokens[0]) != 2)	
+			else if(row == 1 && is_character(tokens[row][strlen(tokens[row]) - 1])) { // 앞 토큰 밖에 없을 때 앞토큰의 마지막이 문자이면
+				if(strcmp(tokens[0], "extern") != 0 && strcmp(tokens[0], "unsigned") != 0 && is_typeStatement(tokens[0]) != 2)	// extern이나 unsigned나 선언된 데이터타입이 아니면 
 					return false;
 			}
-			else if(row > 1 && is_typeStatement(tokens[row - 1]) == 2){
+			else if(row > 1 && is_typeStatement(tokens[row - 1]) == 2){ // 토큰이 2개 이상 있고 2개 앞의 토큰이 unsigned거나 extern이면 
 				if(strcmp(tokens[row - 2], "unsigned") != 0 && strcmp(tokens[row - 2], "extern") != 0)
 					return false;
 			}
 			
-		}
+		} 
 
-		if((row == 0 && !strcmp(tokens[row], "gcc")) ){
+		if((row == 0 && !strcmp(tokens[row], "gcc")) ){ // 첫 토큰이 gcc이면
 			clear_tokens(tokens);
 			strcpy(tokens[0], str);	
 			return 1;
-		} 
+		} */
 
 		row++;
-	}
+	} // while문 끝
 
-	if(all_star(tokens[row - 1]) && row > 1 && !is_character(tokens[row - 2][strlen(tokens[row - 2]) - 1]))  
+	if(all_star(tokens[row - 1]) && row > 1 && !is_character(tokens[row - 2][strlen(tokens[row - 2]) - 1]))  // 앞토큰이 별이고 2개앞 토큰마지막이 문자면
 		row--;				
-	if(all_star(tokens[row - 1]) && row == 1)   
+	if(all_star(tokens[row - 1]) && row == 1)   //앞토큰이 별이면
 		row--;	
 
 	for(i = 0; i < strlen(start); i++)   
@@ -508,7 +506,7 @@ int make_tokens(char *str, char tokens[TOKEN_CNT][MINLEN])
 			}
 		}
 		strcpy(tokens[row], ltrim(rtrim(tokens[row])));
-
+ /*
 		if(!strcmp(tokens[row], "lpthread") && row > 0 && !strcmp(tokens[row - 1], "-")){ 
 			strcat(tokens[row - 1], tokens[row]);
 			memset(tokens[row], 0, sizeof(tokens[row]));
@@ -567,8 +565,8 @@ int make_tokens(char *str, char tokens[TOKEN_CNT][MINLEN])
 	
 	while((p_str = find_typeSpecifier2(tokens)) != -1){  
 		if(!reset_tokens(p_str, tokens))
-			return false;
-	}
+			return false;   */
+	 } 
 	
 	return true;
 }
@@ -584,33 +582,33 @@ node *make_tree(node *root, char (*tokens)[MINLEN], int *idx, int parentheses)
 
 	while(1)	
 	{
-		if(strcmp(tokens[*idx], "") == 0)
+		if(strcmp(tokens[*idx], "") == 0) // 토큰이 비었으면 break
 			break;
 	
-		if(!strcmp(tokens[*idx], ")"))
+		if(!strcmp(tokens[*idx], ")")) 
 			return get_root(cur);
 
 		else if(!strcmp(tokens[*idx], ","))
 			return get_root(cur);
 
-		else if(!strcmp(tokens[*idx], "("))
+		else if(!strcmp(tokens[*idx], "(")) // 여는 괄호면
 		{
 			
-			if(*idx > 0 && !is_operator(tokens[*idx - 1]) && strcmp(tokens[*idx - 1], ",") != 0){
+			if(*idx > 0 && !is_operator(tokens[*idx - 1]) && strcmp(tokens[*idx - 1], ",") != 0){ // 앞 토큰이 연산자가 아니고 쉼표가 아니면 
 				fstart = true;
 
 				while(1)
 				{
-					*idx += 1;
+					*idx += 1; //다음 토큰으로 이동
 
-					if(!strcmp(tokens[*idx], ")"))
+					if(!strcmp(tokens[*idx], ")")) // 닫는괄호면 즉시 탈출 
 						break;
 					
-					new = make_tree(NULL, tokens, idx, parentheses + 1);
+					new = make_tree(NULL, tokens, idx, parentheses + 1); // 다른 트리 생성 
 					
-					if(new != NULL){
-						if(fstart == true){
-							cur->child_head = new;
+					if(new != NULL){ // new가 생성되었으면 
+						if(fstart == true){ 
+							cur->child_head = new; // cur의 자식을 new 로
 							new->parent = cur;
 	
 							fstart = false;
@@ -635,7 +633,7 @@ node *make_tree(node *root, char (*tokens)[MINLEN], int *idx, int parentheses)
 				if(cur == NULL)
 					cur = new;
 
-				else if(!strcmp(new->name, cur->name)){
+				else if(!strcmp(new->name, cur->name)){ // cur와 new의 토큰명이 같으면
 					if(!strcmp(new->name, "|") || !strcmp(new->name, "||") 
 						|| !strcmp(new->name, "&") || !strcmp(new->name, "&&"))
 					{
@@ -650,7 +648,7 @@ node *make_tree(node *root, char (*tokens)[MINLEN], int *idx, int parentheses)
 							cur->next = new;
 						}
 					}
-					else if(!strcmp(new->name, "+") || !strcmp(new->name, "*"))
+					else if(!strcmp(new->name, "+") || !strcmp(new->name, "*")) // new가 +나 *이면
 					{
 						i = 0;
 
@@ -686,7 +684,7 @@ node *make_tree(node *root, char (*tokens)[MINLEN], int *idx, int parentheses)
 							}
 						}
 					}
-					else{
+					else{ // 그외
 						cur = get_last_child(cur);
 						cur->next = new;
 						new->prev = cur;
@@ -694,7 +692,7 @@ node *make_tree(node *root, char (*tokens)[MINLEN], int *idx, int parentheses)
 					}
 				}
 	
-				else
+				else // 그 외
 				{
 					cur = get_last_child(cur);
 
@@ -705,36 +703,36 @@ node *make_tree(node *root, char (*tokens)[MINLEN], int *idx, int parentheses)
 				}
 			}
 		}
-		else if(is_operator(tokens[*idx]))
+		else if(is_operator(tokens[*idx])) // 토큰이 연산자이면
 		{
 			if(!strcmp(tokens[*idx], "||") || !strcmp(tokens[*idx], "&&")
 					|| !strcmp(tokens[*idx], "|") || !strcmp(tokens[*idx], "&") 
 					|| !strcmp(tokens[*idx], "+") || !strcmp(tokens[*idx], "*"))
-			{
-				if(is_operator(cur->name) == true && !strcmp(cur->name, tokens[*idx]))
-					operator = cur;
+			{ // 좌우가 상관없는 연산자이면 
+				if(is_operator(cur->name) == true && !strcmp(cur->name, tokens[*idx])) // cur이 연산자이고 현재 토큰과 일치하면 
+					operator = cur; // operator를 cur로
 		
-				else
+				else // 일치하지 않으면 
 				{
 					new = create_node(tokens[*idx], parentheses);
-					operator = get_most_high_precedence_node(cur, new);
+					operator = get_most_high_precedence_node(cur, new); // 가장 우선순위가 높은 연산자를 operaotr로 
 
-					if(operator->parent == NULL && operator->prev == NULL){
+					if(operator->parent == NULL && operator->prev == NULL){ // operator의 부모와 이전 원소가 널이면
 
 						if(get_precedence(operator->name) < get_precedence(new->name)){
-							cur = insert_node(operator, new);
+							cur = insert_node(operator, new); // op의 끝에 new 삽입
 						}
 
 						else if(get_precedence(operator->name) > get_precedence(new->name))
 						{
 							if(operator->child_head != NULL){
 								operator = get_last_child(operator);
-								cur = insert_node(operator, new);
+								cur = insert_node(operator, new); // op의 자식의 끝에 new 삽입
 							}
 						}
 						else
 						{
-							operator = cur;
+							operator = cur; // 우선순위 같으면 
 	
 							while(1)
 							{
@@ -762,11 +760,11 @@ node *make_tree(node *root, char (*tokens)[MINLEN], int *idx, int parentheses)
 				}
 
 			}
-			else
+			else // 토큰이 문자열일 경우 
 			{
-				new = create_node(tokens[*idx], parentheses);
+				new = create_node(tokens[*idx], parentheses); //새로운 노드 생성
 
-				if(cur == NULL)
+				if(cur == NULL) // 노드가 없을 경우 생성
 					cur = new;
 
 				else
@@ -796,11 +794,11 @@ node *make_tree(node *root, char (*tokens)[MINLEN], int *idx, int parentheses)
 				}
 			}
 		}
-		else 
+		else  // 토큰이 문자열일 경우
 		{
-			new = create_node(tokens[*idx], parentheses);
+			new = create_node(tokens[*idx], parentheses); // 노드 생성
 
-			if(cur == NULL)
+			if(cur == NULL) 
 				cur = new;
 
 			else if(cur->child_head == NULL){
@@ -1045,31 +1043,31 @@ int is_typeStatement(char *str)
 	
 	start = str;
 	strncpy(str2,str,strlen(str));
-	remove_space(str2);
+	remove_space(str2); // str2에 space을 제거
 
 	while(start[0] == ' ')
 		start += 1;
 
-	if(strstr(str2, "gcc") != NULL)
+	if(strstr(str2, "gcc") != NULL) // "gcc"이 str2에 있으면
 	{
-		strncpy(tmp2, start, strlen("gcc"));
-		if(strcmp(tmp2,"gcc") != 0)
+		strncpy(tmp2, start, strlen("gcc")); // start의 3바이트를 tmp2에 복사
+		if(strcmp(tmp2,"gcc") != 0) // tmp2가 gcc가 아니면
 			return 0;
-		else
+		else // gcc이면
 			return 2;
 	}
 	
-	for(i = 0; i < DATATYPE_SIZE; i++)
+	for(i = 0; i < DATATYPE_SIZE; i++) // datatype인지 검사
 	{
-		if(strstr(str2,datatype[i]) != NULL)
+		if(strstr(str2,datatype[i]) != NULL) // datatype이 문자열에 존재하는 경우
 		{	
-			strncpy(tmp, str2, strlen(datatype[i]));
-			strncpy(tmp2, start, strlen(datatype[i]));
+			strncpy(tmp, str2, strlen(datatype[i])); 
+			strncpy(tmp2, start, strlen(datatype[i])); 
 			
-			if(strcmp(tmp, datatype[i]) == 0)
+			if(strcmp(tmp, datatype[i]) == 0) // 맨앞이 datatype인 경우
 				if(strcmp(tmp, tmp2) != 0)
 					return 0;  
-				else
+				else // 공백없이 잘 입력한 경우
 					return 2;
 		}
 
@@ -1116,7 +1114,7 @@ int find_typeSpecifier2(char tokens[TOKEN_CNT][MINLEN])
     return -1;
 }
 
-int all_star(char *str)
+int all_star(char *str) // 문자열에 *이 있는지 확인 해주는 함수 
 {
 	int i;
 	int length= strlen(str);
@@ -1247,7 +1245,7 @@ int reset_tokens(int start, char tokens[TOKEN_CNT][MINLEN])
 	return true;
 }
 
-void clear_tokens(char tokens[TOKEN_CNT][MINLEN])
+void clear_tokens(char tokens[TOKEN_CNT][MINLEN]) // 토큰리스트 비워주는 함수
 {
 	int i;
 
@@ -1255,28 +1253,28 @@ void clear_tokens(char tokens[TOKEN_CNT][MINLEN])
 		memset(tokens[i], 0, sizeof(tokens[i]));
 }
 
-char *rtrim(char *_str)
+char *rtrim(char *_str) // 문자열 끝에 널문자 삽입하는 함수
 {
 	char tmp[BUFLEN];
 	char *end;
 
-	strcpy(tmp, _str);
-	end = tmp + strlen(tmp) - 1;
-	while(end != _str && isspace(*end))
+	strcpy(tmp, _str); 
+	end = tmp + strlen(tmp) - 1; // 문자열의 마지막주소
+	while(end != _str && isspace(*end)) // 공백문자인 경우 주소 당김
 		--end;
 
-	*(end + 1) = '\0';
-	_str = tmp;
-	return _str;
+	*(end + 1) = '\0'; // 마지막 문자를 널로 지정
+	_str = tmp; // 작업 완료된 문자열 저장교환
+	return _str; // 작업된 문자열 리턴
 }
 
 char *ltrim(char *_str)
 {
 	char *start = _str;
 
-	while(*start != '\0' && isspace(*start))
-		++start;
-	_str = start;
+	while(*start != '\0' && isspace(*start)) // 공백문자인 경우 주소 밈
+		++start; 
+	_str = start; //작업 완료된 문자열 저장 교환
 	return _str;
 }
 
@@ -1337,25 +1335,25 @@ void remove_space(char *str)
 	*i = 0;
 }
 
-int check_brackets(char *str)
+int check_brackets(char *str) // 괄호가 올바른지 체크해주는 함수
 {
-	char *start = str;
+	char *start = str; 
 	int lcount = 0, rcount = 0;
 	
 	while(1){
-		if((start = strpbrk(start, "()")) != NULL){
-			if(*(start) == '(')
+		if((start = strpbrk(start, "()")) != NULL){ // "()" 둘 중 하나가 있는 위치로 이동
+			if(*(start) == '(') // 좌괄호 체크
 				lcount++;
-			else
+			else // 우괄호 체크
 				rcount++;
 
-			start += 1; 		
+			start += 1; // 다음 문자위치로 이동		
 		}
-		else
+		else // 없으면 종료
 			break;
 	}
 
-	if(lcount != rcount)
+	if(lcount != rcount) // 괄호 개수가 맞지 않으면 오류
 		return 0;
 	else 
 		return 1;
