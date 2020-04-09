@@ -329,7 +329,7 @@ void make_scoreTable(char *ansDir)
 			continue;
 
 		if((type = get_file_type(dirp->d_name)) < 0)
-		strcpy(score_table[idx++].qname, dirp->d_name);
+			strcpy(score_table[idx++].qname, dirp->d_name);
 	}
 
 	closedir(dp);
@@ -779,7 +779,7 @@ double compile_program(char *id, char *filename) // 컴파일오류와 감점사
 
 	if(size > 0) //에러 출력시  정답파일 잘못됨
 		return false;
-	
+
 
 	sprintf(tmp_f, "%s/%s/%s", stuDir, id, filename); // 학생 실행파일생성
 	sprintf(tmp_e, "%s/%s/%s.stdexe", stuDir, id, qname);
