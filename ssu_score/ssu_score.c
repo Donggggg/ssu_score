@@ -31,7 +31,9 @@ int mOption = false;
 void ssu_score(int argc, char *argv[]) // 체점 시작
 {
 	char saved_path[BUFLEN]; // 경로 변수
-	int i;
+	char ql_name[FILELEN]; // -t옵션 에러처리용 변수
+	char *qname;
+	int i, check, qnum;
 
 	for(i = 0; i < argc; i++){ // -h 옵션체크 
 		if(!strcmp(argv[i], "-h")){
@@ -68,6 +70,27 @@ void ssu_score(int argc, char *argv[]) // 체점 시작
 
 	set_scoreTable(ansDir); // 점수테이블이 있는지 확인하고 세팅
 	set_idTable(stuDir); // 학번테이블 생성
+
+	i = 0;
+
+	while(strcmp(threadFiles[i], "") && i <  5){ // -t옵션 인자 에러 처리
+		check = false;
+		qnum = 0;
+		printf("%s\n", threadFiles[i]);
+		while(strcmp(score_table[qnum].qname,"")){
+			strcpy(ql_name, score_table[qnum++].qname);
+			qname = strtok(ql_name, ".");
+			if(!strcmp(ql_name, threadFiles[i])){
+				check = true;
+				break;
+			}
+		}
+		if(check == false){
+			fprintf(stderr, "Your Input isn's exist at -t\n");
+			exit(0);
+		}
+		i++;
+	 } 
 
 	printf("grading student's test papers..\n");
 	score_students(); // 체점 시작
@@ -147,9 +170,10 @@ void do_mOption(char *path) // m옵션을 처리해주는 함수
 {
 	FILE *fp; 
 	int size, offset, now = 0, fd; 
-	int qnum;
+	int qnum, check;
 	char mod[FILELEN];
-	char qname[FILELEN];
+	char *qname;
+	char ql_name[FILELEN];
 	char score[BUFLEN];
 	char *head, *tail;
 	double tmp;
@@ -167,51 +191,65 @@ void do_mOption(char *path) // m옵션을 처리해주는 함수
 
 		printf("Input question's number to modify >> ");
 		scanf("%s", mod);
-		getchar();
-		qnum = 0;
 
 		if(!strcmp(mod, "no")) 
 			break;
-		else
-			while(fscanf(fp, "%[^,],%s\n", qname, score) != EOF)
-			{
-				strcpy(qname, strtok(qname, "."));
 
-				if(!strcmp(qname, mod)){ // 맞는 문제번호를 찾으면
-					printf("Current score : %s\n", score);
-					printf("New score : ");
-					scanf("%s", mod);
+		qnum = 0;
+		check = true;
 
-					tmp = atof(mod);
-					score_table[qnum].score = tmp;
-					printf("%s\n", score_table[qnum].qname);
-					sprintf(mod,"%.2f\n", tmp);
+		while(strcmp(score_table[qnum].qname, "")){
+			strcpy(ql_name, score_table[qnum++].qname);
+			qname = strtok(ql_name, ".");
+			if(!strcmp(qname, mod))
+				check = false;
+		}
 
-					fseek(fp, 0, SEEK_CUR);
-					now = ftell(fp); // 마지막 탐색 지점 저장
-					tail = (char*)malloc(sizeof(char) * (size - now)); // 탐색 지점 기준 뒤쪽
-					fread(tail, size-now, 1, fp);
+		if(check){
+			fprintf(stderr, "Your input isn't exist!\n");
+			exit(0);
+		}
 
-					fseek(fp, -(strlen(score) + 1 + size - now), SEEK_CUR); // 바뀔 점수 시작 지점
-					offset = ftell(fp);
-					head = (char*)malloc(sizeof(char) * offset); //시작 지점 앞쪽
-					fseek(fp, 0, SEEK_SET);
-					fread(head, offset, 1, fp);
+		qnum = 0;
 
-					if((fd = open(path, O_WRONLY | O_TRUNC)) < 0){ // 파일을 재생성해줌
-						fprintf(stderr, "file open error for %s\n", path);
-						return ;
-					}
+		while(fscanf(fp, "%[^,],%s\n", qname, score) != EOF)
+		{
+			strcpy(qname, strtok(qname, "."));
 
-					write(fd, head, offset); // 순서대로 다시 write
-					write(fd, mod, strlen(mod));
-					write(fd, tail, size - now);
-					close(fd);
-					free(head);
-					free(tail);
+			if(!strcmp(qname, mod)){ // 맞는 문제번호를 찾으면
+				printf("Current score : %s\n", score);
+				printf("New score : ");
+				scanf("%s", mod);
+
+				tmp = atof(mod);
+				score_table[qnum].score = tmp;
+				sprintf(mod,"%.2f\n", tmp);
+
+				fseek(fp, 0, SEEK_CUR);
+				now = ftell(fp); // 마지막 탐색 지점 저장
+				tail = (char*)malloc(sizeof(char) * (size - now)); // 탐색 지점 기준 뒤쪽
+				fread(tail, size-now, 1, fp);
+
+				fseek(fp, -(strlen(score) + 1 + size - now), SEEK_CUR); // 바뀔 점수 시작 지점
+				offset = ftell(fp);
+				head = (char*)malloc(sizeof(char) * offset); //시작 지점 앞쪽
+				fseek(fp, 0, SEEK_SET);
+				fread(head, offset, 1, fp);
+
+				if((fd = open(path, O_WRONLY | O_TRUNC)) < 0){ // 파일을 재생성해줌
+					fprintf(stderr, "file open error for %s\n", path);
+					return ;
 				}
-				qnum++;
+
+				write(fd, head, offset); // 순서대로 다시 write
+				write(fd, mod, strlen(mod));
+				write(fd, tail, size - now);
+				close(fd);
+				free(head);
+				free(tail);
 			}
+			qnum++;
+		}
 	}
 	fclose(fp);
 }
@@ -220,6 +258,7 @@ void do_iOption(int argc, char* argv[], int optind) // i옵션을 처리하는 �
 {
 	FILE *fp;
 	int i, j, k, qnum = 0;
+	int check;
 	double d_score;
 	char *id, *score;
 	char *qname;
@@ -241,15 +280,18 @@ void do_iOption(int argc, char* argv[], int optind) // i옵션을 처리하는 �
 		qname = strtok(NULL, ",");
 	} 
 
-	for(i = 0; i < size; i++) // 확일해야할 학번 탐색
+	i = 0;
+	while(strcmp(printId[i], "") && i < 5)
 	{
 		while(fscanf(fp, "%s\n", tmp) != EOF)
 		{
+			check = false;
 			id = strtok(tmp, ","); // score.csv에서 일치하는 학번 탐색
 			if(!strcmp(id, printId[i])){
 				printf("%s's wrong answer :\n", printId[i]);
 				k = qnum;
 				j = 0;
+				check = true;
 				score = strtok(NULL, ","); 
 				while(k--) // 틀린문제 탐색
 				{
@@ -263,8 +305,14 @@ void do_iOption(int argc, char* argv[], int optind) // i옵션을 처리하는 �
 				break;
 			}
 		}
+
+		if(!check){
+			fprintf(stderr, "Your input isn't exist at -i\n");
+			exit(0);
+		}
 		fseek(fp, 0, SEEK_SET);
 		fscanf(fp, "%s\n", tmp);
+		i++;
 	} 
 	fclose(fp);
 }
