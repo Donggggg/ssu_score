@@ -147,6 +147,7 @@ void do_mOption(char *path) // m옵션을 처리해주는 함수
 {
 	FILE *fp; 
 	int size, offset, now = 0, fd; 
+	int qnum;
 	char mod[FILELEN];
 	char qname[FILELEN];
 	char score[BUFLEN];
@@ -162,10 +163,12 @@ void do_mOption(char *path) // m옵션을 처리해주는 함수
 
 		fseek(fp, 0, SEEK_END);
 		size = ftell(fp); // 파일사이즈 측정
-		fseek(fp, now, SEEK_SET); // 마저 탐색하는 곳으로 이동
+		fseek(fp, 0, SEEK_SET); // 마저 탐색하는 곳으로 이동
 
 		printf("Input question's number to modify >> ");
-		scanf("%s", mod); // 수정할 문제 번호
+		scanf("%s", mod);
+		getchar();
+		qnum = 0;
 
 		if(!strcmp(mod, "no")) 
 			break;
@@ -177,8 +180,11 @@ void do_mOption(char *path) // m옵션을 처리해주는 함수
 				if(!strcmp(qname, mod)){ // 맞는 문제번호를 찾으면
 					printf("Current score : %s\n", score);
 					printf("New score : ");
-					scanf("%s", mod); // 새로운 점수를 입력함
+					scanf("%s", mod);
+
 					tmp = atof(mod);
+					score_table[qnum].score = tmp;
+					printf("%s\n", score_table[qnum].qname);
 					sprintf(mod,"%.2f\n", tmp);
 
 					fseek(fp, 0, SEEK_CUR);
@@ -201,10 +207,10 @@ void do_mOption(char *path) // m옵션을 처리해주는 함수
 					write(fd, mod, strlen(mod));
 					write(fd, tail, size - now);
 					close(fd);
-					fclose(fp);
 					free(head);
 					free(tail);
 				}
+				qnum++;
 			}
 	}
 	fclose(fp);
@@ -267,15 +273,17 @@ void set_scoreTable(char *ansDir) // 점수테이블을 세팅하는 함수
 {
 	char *filename = "score_table.csv"; // 현재 디렉토리에 score_table.csv 형태
 
-	if(access(filename, F_OK) == 0)  // 기존 파일 있으면
+	if(access(filename, F_OK) == 0){  // 기존 파일 있으면
 		read_scoreTable(filename); // 점수 파일 읽음
+	}
 	else{ //없으면
 		make_scoreTable(ansDir); //만들고
 		write_scoreTable(filename); //씀
 	}
 
-	if(mOption) // m옵션 있을시 점수 수정
+	if(mOption){ // m옵션 있을시 점수 수정
 		do_mOption(filename);
+	}
 }
 
 void read_scoreTable(char *path)
@@ -328,7 +336,7 @@ void make_scoreTable(char *ansDir)
 		if(!strcmp(dirp->d_name, ".") || !strcmp(dirp->d_name, "..")) //경로 시작이 부모나 자신이면
 			continue;
 
-		if((type = get_file_type(dirp->d_name)) < 0)
+		if((type = get_file_type(dirp->d_name)) > 0)
 			strcpy(score_table[idx++].qname, dirp->d_name);
 	}
 
@@ -370,8 +378,9 @@ void write_scoreTable(char *filename) // 스코어테이블에 입력하는 함�
 
 	for(i = 0; i < num; i++)
 	{
-		if(score_table[i].score == 0)
+		if(score_table[i].score == 0){
 			break;
+		}
 
 		sprintf(tmp, "%s,%.2f\n", score_table[i].qname, score_table[i].score);
 		write(fd, tmp, strlen(tmp));
@@ -509,7 +518,7 @@ void score_students() //체점을 시작하는 함수
 		write(fd, tmp, strlen(tmp)); 
 
 		score += score_student(fd, id_table[num]); //
-	}
+	} 
 
 	printf("Total average : %.2f\n", score / num);
 
