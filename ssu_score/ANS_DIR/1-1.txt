@@ -1,1 +1,2 @@
-abc + (*max + *min);
+creat(fname, CREAT_MODE):creat(fname, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH):creat(fname, 0644)
+

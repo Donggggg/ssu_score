@@ -11,12 +11,12 @@
 	#define BUFLEN 1024
 #endif
 
-#define OPERATOR_CNT 24
-#define DATATYPE_SIZE 35
-#define MINLEN 64
-#define TOKEN_CNT 50
+#define OPERATOR_CNT 24 // 연산자 개수
+#define DATATYPE_SIZE 35 // 데이터타입 개수
+#define MINLEN 64 // 최소길이
+#define TOKEN_CNT 50 // 토큰최대개수
 
-typedef struct node{
+typedef struct node{ // 문자 트리의 노드
 	int parentheses;
 	char *name;
 	struct node *parent;

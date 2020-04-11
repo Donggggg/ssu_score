@@ -179,7 +179,6 @@ void do_mOption(char *path) // m옵션을 처리해주는 함수
 
 	// 인자 에러처리 관련 변수 
 	int qnum, check; 
-	double tmp; 
 	char *qname;
 	char ql_name[FILELEN];
 

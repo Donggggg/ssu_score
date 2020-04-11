@@ -19,21 +19,21 @@
 #ifndef CFILE
 	#define CFILE 4
 #endif
-#ifndef OVER
+#ifndef OVER // 시간초과 초설정
 	#define OVER 5
 #endif
-#ifndef WARNING
+#ifndef WARNING // warning시 감점되는 점수
 	#define WARNING -0.1
 #endif
-#ifndef ERROR
+#ifndef ERROR // error시 0점
 	#define ERROR 0
 #endif
 
-#define FILELEN 64
-#define BUFLEN 1024
-#define SNUM 100
-#define QNUM 100
-#define ARGNUM 5
+#define FILELEN 64 // 파일명
+#define BUFLEN 1024 // 버퍼
+#define SNUM 100 // 학생수
+#define QNUM 100 // 문제수
+#define ARGNUM 5 // 가변인자최대개수
 
 struct ssu_scoreTable{
 	char qname[FILELEN];
